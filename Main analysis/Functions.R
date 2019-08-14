@@ -265,9 +265,11 @@ fun.net.prop <- function(web, dietcat=NULL){
                      char.path.length = mean(shortest.paths(iweb)))
     
     #Strategy
-    strat.res <- c(GEN =MeanGenerality_norm(webless),
+    strat.res <- c(GEN =MeanGenerality(webless),
+                   # GEN =MeanGenerality_norm(webless), # Used in previous revision.
                    GENSD = SDGenerality_norm(webless),
-                   VUL = MeanVulnerability_norm(webless),
+                   VUL = MeanVulnerability(webless),
+                   # VUL = MeanVulnerability_norm(webless), # Used in previous revision.
                    VULSD = SDVulnerability_norm(webless),
                    MAXSIM = Maxsim(webless)
     )
