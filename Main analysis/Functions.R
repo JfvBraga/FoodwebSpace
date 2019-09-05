@@ -206,8 +206,8 @@ foo <- function (...)
 # Function to calculate network prop
 
 fun.net.prop <- function(web, dietcat=NULL){
-  #   Metrics:
-  #   1: Chain length
+  #   Metrics calculated:
+  #   1: Chain length (Trophic level)
   #   2: Taxa  
   #   3: complexity
   #   4: strategy
@@ -218,8 +218,7 @@ fun.net.prop <- function(web, dietcat=NULL){
   # Trophic level
   community <- Community(data.frame(node = colnames(web)), 
                          trophic.links = PredationMatrixToLinks(web),
-                         properties = list(title = "Test2")
-  )
+                         properties = list(title = "Test2"))
   
   community <- RemoveCannibalisticLinks(community, title='community');
   TL <- PreyAveragedTrophicLevel(community)
@@ -227,13 +226,10 @@ fun.net.prop <- function(web, dietcat=NULL){
   if(!is.null(dietcat)) webless <- web[!row.names(web) %in% dietcat,!colnames(web) %in% dietcat, drop=FALSE] # without diet category
   if(!is.null(dim(web))){
     
-    Chain.res <- c( 
-      meanTL = mean(TL),
-      maxTL= max(TL))
-    
-    
+    Chain.res <- c(meanTL = mean(TL), maxTL= max(TL))
+       
     # TAXA
-    nCarnivorous_cat <- c("Invertebrates","Fish","DomesticAnimals","Carrion")
+    nCarnivorous_cat <- c("Invertebrates","Fish","DomesticAnimals","Carrion")   # diet categories that are not plant based. Used to defined which basal are herbivore basal and non-herbivore basal species.
     
     nCarnivorous_cat_in_web <- nCarnivorous_cat[nCarnivorous_cat %in% row.names(web)]
     Basalspp <- colnames(webless)[which(colSums(webless)==0)]
@@ -244,9 +240,7 @@ fun.net.prop <- function(web, dietcat=NULL){
       else propBNonH <- 0
     
     propBH <- abs(propBNonH-propB)
-    
     propT = sum(rowSums(webless)==0 & colSums(webless)!=0 )/ nrow(webless)
-    
     sum(colSums(web) == 0) / ncol(web)
     
     Taxa.res <- c(propOmn = OmnivoryCUS(web,dietcat = dietcat),
@@ -271,29 +265,20 @@ fun.net.prop <- function(web, dietcat=NULL){
                    VUL = MeanVulnerability(webless),
                    # VUL = MeanVulnerability_norm(webless), # Used in previous revision.
                    VULSD = SDVulnerability_norm(webless),
-                   MAXSIM = Maxsim(webless)
-    )
-    #Results
-    
-    res <- c(
-      Complex.res,Taxa.res,
-      strat.res
-      ,Chain.res
-    ) 
+                   MAXSIM = Maxsim(webless))
+    #Compilation of results
+    res <- c(Complex.res, Taxa.res, strat.res, Chain.res) 
   } 
   
-  
   return(res)
-  
 }
 
-
+# Centrality metrics
 Centrality <- function(web, dietcat){
  
   community <- Community(data.frame(node = colnames(web)), 
                          trophic.links = PredationMatrixToLinks(web),
-                         properties = list(title = "Test2")
-  )
+                         properties = list(title = "Test2"))
   
   # Get all spp trophic levels
   TL <- PreyAveragedTrophicLevel(community)
@@ -303,7 +288,7 @@ Centrality <- function(web, dietcat){
     web <- web[!row.names(web) %in% dietcat,!colnames(web) %in% dietcat, drop=FALSE] # remove diet category from centrality measures
   }
  
-# Now I'll keep the dietcat
+# Now I'll keep the diet categories
   iweb <- graph.adjacency(web, mode="directed")
   res <- list()
   res$iweb        <- iweb  
@@ -347,21 +332,16 @@ IsOmnivoreCUS <- function(M, level = PreyAveragedTrophicLevel){
   community <- Community(data.frame(node = colnames(M)), trophic.links = PredationMatrixToLinks(M),
                          properties = list(title = "Test2"))
   community <- RemoveCannibalisticLinks(community, title='community');
-  
   # get resource spp for each predator
   resource.spp <- ResourcesByNode(community)
-  
   #get no. resources
   n.resources <- sapply(resource.spp, length)
-  
   # get all spp trophic levels
   tl <- level(community)
-  
   # get the number of different trophic levels predated upon
   resource.tl <- sapply(resource.spp, FUN = function(x){
     return(length(unique(tl[x])))
   })
-  
   # a sp is an omnivore if it predates 2 or more spp of different trophic levels
   return(n.resources >= 2 & resource.tl >= 2)
 }
@@ -378,18 +358,14 @@ OmnivoryCUS <- function(M, dietcat = NULL, level = PreyAveragedTrophicLevel){
 MeanFoodChainLength <- function(M){
   # Use PredationMatrixToLinks() to create a Cheddar community from a predation
   # matrix
-  
   node <- 1:dim(M)[1];
   for(n in 1:length(node)){
     node[n] <- paste(node[n],'-');
   }
   
   pm <- matrix(M, ncol=dim(M)[2], dimnames=list(node, node), byrow=TRUE);
-  
   community <- Community(nodes=data.frame(node=node), trophic.links=PredationMatrixToLinks(pm), properties=list(title='Community'));
-  
   community <- RemoveCannibalisticLinks(community, title='community');
-  
   chain.stats <- TrophicChainsStats(community)
   ch_lens <- (chain.stats$chain.lengths + 1)
   
@@ -433,7 +409,7 @@ SDVulnerability <- function(M){
   return(sd(OutDegree(M)[OutDegree(M)!=0]));
 }
 
-# Maximum trophic similiarity
+# Maximum trophic similiarity (Function from https://github.com/opetchey/dumping_ground/blob/master/random_cascade_niche/FoodWebFunctions.r)
 Maxsim <- function(web){
   sims <- matrix(0, length(web[,1]), length(web[,1]))
   for(i in 1:length(web[,1]))
