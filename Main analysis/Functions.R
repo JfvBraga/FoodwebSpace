@@ -273,37 +273,6 @@ fun.net.prop <- function(web, dietcat=NULL){
   return(res)
 }
 
-# Centrality metrics
-Centrality <- function(web, dietcat){
- 
-  community <- Community(data.frame(node = colnames(web)), 
-                         trophic.links = PredationMatrixToLinks(web),
-                         properties = list(title = "Test2"))
-  
-  # Get all spp trophic levels
-  TL <- PreyAveragedTrophicLevel(community)
-  
-  if(!is.null(dietcat)) {
-    TL <-  TL[!(names(TL) %in% (dietcat))] # to remove diet cat from trophic level
-    web <- web[!row.names(web) %in% dietcat,!colnames(web) %in% dietcat, drop=FALSE] # remove diet category from centrality measures
-  }
- 
-# Now I'll keep the diet categories
-  iweb <- graph.adjacency(web, mode="directed")
-  res <- list()
-  res$iweb        <- iweb  
-  res$TL          <- TL
-  res$DegreeA     <- degree(graph = iweb,mode = "total")
-  res$DegreeIN    <- degree(graph = iweb,mode = "in")
-  res$DegreeOUT   <- degree(graph = iweb,mode = "out")
-  res$Unconnected <- names(which(res$DegreeA == 0)) # registered nodes that after diet catogery removal are unconnected (centrality = 0 or null)
-  res$BC          <- betweenness(graph = iweb,directed = TRUE)
-  res$Eig.Cent    <- eigen_centrality(graph = iweb,directed = FALSE,scale = TRUE)
-  res$CC          <- closeness(iweb, vids = V(iweb), mode = c("in"), weights = NULL, normalized = FALSE)
-
-  return(res)
-}
-
 InDegree <- TrophicGenerality <- NumberOfResources <- function(M){
   return(colSums(M));
 }
